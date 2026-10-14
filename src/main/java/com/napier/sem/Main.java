@@ -28,6 +28,9 @@ public class Main {
 
         } catch (Exception e) {
             System.err.println("MongoDB connection failed: " + e.getMessage());
+
+            // Ensure GitHub Actions detects the failure
+            System.exit(1);
         }
     }
 }
