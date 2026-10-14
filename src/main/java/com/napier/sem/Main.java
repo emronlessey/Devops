@@ -1,17 +1,36 @@
 package com.napier.sem;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class Main {
-    public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
+public class Main {
+
+    public static void main(String[] args) {
+
+        System.out.println("Hello and welcome!");
+
+        String connectionString = System.getenv("MONGO_URI");
+
+        if (connectionString == null || connectionString.isBlank()) {
+            connectionString = "mongodb://localhost:27000";
+        }
+
+        try (MongoClient mongoClient = MongoClients.create(connectionString)) {
+
+            MongoDatabase database = mongoClient.getDatabase("test");
+
+            Document result = database.runCommand(new Document("ping", 1));
+
+            System.out.println("Successfully connected to MongoDB!");
+            System.out.println("MongoDB response: " + result.toJson());
+
+        } catch (Exception e) {
+            System.err.println("MongoDB connection failed: " + e.getMessage());
+
+            // Ensure GitHub Actions detects the failure
+            System.exit(1);
         }
     }
 }
