@@ -1,50 +1,60 @@
-name: A workflow for my Hello World App
+name: Employee Reporting System CI/CD
 
-on: push
+on:
+  push:
+  pull_request:
 
 jobs:
   build:
-    name: Hello world action
+    name: Build and Test Employee Application
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Set up JDK 17
+      - name: Set Up Java 17
         uses: actions/setup-java@v5
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'adopt'
 
-      - name: Build with Maven
-        run: mvn package
+      - name: Build Application with Maven
+        run: mvn -B clean package
 
-      - name: Create Docker Network
-        run: docker network create se-methods
+      - name: Build Docker Images
+        run: docker compose build
 
-      - name: Start MongoDB Container
-        run: docker run -d --name mongodb --network se-methods mongo:4.4
+      - name: Start MySQL Database
+        run: docker compose up -d db
 
-      - name: Wait for MongoDB
+      - name: Wait for MySQL to Become Healthy
         run: |
-          for i in {1..30}; do
-            if docker exec mongodb mongo --quiet --eval "db.runCommand({ ping: 1 }).ok" | grep -q '^1'; then
-              echo "MongoDB is ready!"
+          for i in {1..60}; do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q db)")
+
+            if [ "$STATUS" = "healthy" ]; then
+              echo "MySQL is healthy!"
               exit 0
             fi
-            echo "Waiting for MongoDB..."
-            sleep 2
+
+            echo "Waiting for MySQL... ($i/60)"
+            sleep 10
           done
-          echo "MongoDB failed to become ready."
+
+          echo "MySQL failed to become healthy."
+          docker compose logs db
           exit 1
 
-      - name: Build Docker Image
-        run: docker build -t semimage .
+      - name: Run Employee Application
+        run: docker compose run --rm --no-deps app
 
-      - name: Run Docker Container
-        run: |
-          docker run --rm \
-            --network se-methods \
-            -e MONGO_URI=mongodb://mongodb:27017 \
-            semimage
+      - name: Show Container Logs on Failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop Containers
+        if: always()
+        run: docker compose down
