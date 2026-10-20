@@ -1,9 +1,9 @@
 package com.napier.sem;
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 public class Main {
 
@@ -11,23 +11,27 @@ public class Main {
 
         System.out.println("Hello and welcome!");
 
-        String connectionString = System.getenv("MONGO_URI");
+        String host = System.getenv().getOrDefault("MYSQL_HOST", "localhost");
+        String port = System.getenv().getOrDefault("MYSQL_PORT", "3307");
+        String database = System.getenv().getOrDefault("MYSQL_DATABASE", "employees");
+        String user = System.getenv().getOrDefault("MYSQL_USER", "root");
+        String password = System.getenv().getOrDefault("MYSQL_PASSWORD", "example");
 
-        if (connectionString == null || connectionString.isBlank()) {
-            connectionString = "mongodb://localhost:27000";
-        }
+        String url = "jdbc:mysql://" + host + ":" + port + "/" + database;
 
-        try (MongoClient mongoClient = MongoClients.create(connectionString)) {
+        try (Connection connection = DriverManager.getConnection(url, user, password);
+             Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery(
+                     "SELECT COUNT(*) AS total_employees FROM employees")) {
 
-            MongoDatabase database = mongoClient.getDatabase("test");
+            System.out.println("Successfully connected to MySQL!");
 
-            Document result = database.runCommand(new Document("ping", 1));
-
-            System.out.println("Successfully connected to MongoDB!");
-            System.out.println("MongoDB response: " + result.toJson());
+            if (result.next()) {
+                System.out.println("Total employees: " + result.getInt("total_employees"));
+            }
 
         } catch (Exception e) {
-            System.err.println("MongoDB connection failed: " + e.getMessage());
+            System.err.println("MySQL connection failed: " + e.getMessage());
 
             // Ensure GitHub Actions detects the failure
             System.exit(1);
