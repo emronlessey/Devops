@@ -1,4 +1,7 @@
-FROM ubuntu:latest
-LABEL authors="Admin"
+FROM amazoncorretto:17
 
-ENTRYPOINT ["top", "-b"]
+WORKDIR /app
+
+COPY target/SEMCode-1.1.0-jar-with-dependencies.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
