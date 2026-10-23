@@ -36,6 +36,9 @@ public class Main {
 // Display employee details
             displayEmployee(employee);
 
+            // Retrieve and display salaries for employees with the Engineer role
+            getSalariesByRole(connection, "Engineer");
+
         } catch (Exception e) {
             System.err.println("MySQL connection failed:");
             e.printStackTrace();
@@ -131,5 +134,48 @@ public class Main {
         System.out.println("Department: " + employee.department);
         System.out.println("Manager: " + employee.manager);
 
+    }
+    public static void getSalariesByRole(Connection connection, String role) {
+
+        String sql = """
+        SELECT
+            employees.emp_no,
+            employees.first_name,
+            employees.last_name,
+            salaries.salary
+        FROM employees, salaries, titles
+        WHERE employees.emp_no = salaries.emp_no
+          AND employees.emp_no = titles.emp_no
+          AND salaries.to_date = '9999-01-01'
+          AND titles.to_date = '9999-01-01'
+          AND titles.title = ?
+        ORDER BY employees.emp_no ASC
+        """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, role);
+
+            try (ResultSet result = statement.executeQuery()) {
+
+                System.out.println("\nSalary Report for Role: " + role);
+                System.out.println("------------------------------------------------------");
+
+                System.out.printf("%-12s %-20s %-20s %-10s%n",
+                        "Emp No", "First Name", "Last Name", "Salary");
+
+                while (result.next()) {
+
+                    System.out.printf("%-12d %-20s %-20s %-10d%n",
+                            result.getInt("emp_no"),
+                            result.getString("first_name"),
+                            result.getString("last_name"),
+                            result.getInt("salary"));
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error retrieving salaries by role: " + e.getMessage());
+        }
     }
 }
