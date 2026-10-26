@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 public class Main {
 
@@ -35,6 +36,26 @@ public class Main {
 
 // Display employee details
             displayEmployee(employee);
+
+            // Retrieve and display salaries for employees with the Engineer role
+            getSalariesByRole(connection, "Engineer");
+
+            // Retrieve all employees with their current salaries
+            ArrayList<Employee> employees = getAllSalaries(connection);
+
+// Display the salary report
+            if (employees != null) {
+
+                // Print all employee salaries
+                printSalaries(employees);
+
+                // Display the total number of current salary records
+                System.out.println("\nTotal current employee salaries: " + employees.size());
+
+            } else {
+                System.out.println("Failed to retrieve employee salaries.");
+            }
+
 
         } catch (Exception e) {
             System.err.println("MySQL connection failed:");
@@ -131,5 +152,122 @@ public class Main {
         System.out.println("Department: " + employee.department);
         System.out.println("Manager: " + employee.manager);
 
+    }
+    public static void getSalariesByRole(Connection connection, String role) {
+
+        String sql = """
+        SELECT
+            employees.emp_no,
+            employees.first_name,
+            employees.last_name,
+            salaries.salary
+        FROM employees, salaries, titles
+        WHERE employees.emp_no = salaries.emp_no
+          AND employees.emp_no = titles.emp_no
+          AND salaries.to_date = '9999-01-01'
+          AND titles.to_date = '9999-01-01'
+          AND titles.title = ?
+        ORDER BY employees.emp_no ASC
+        """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, role);
+
+            try (ResultSet result = statement.executeQuery()) {
+
+                System.out.println("\nSalary Report for Role: " + role);
+                System.out.println("------------------------------------------------------");
+
+                System.out.printf("%-12s %-20s %-20s %-10s%n",
+                        "Emp No", "First Name", "Last Name", "Salary");
+
+                while (result.next()) {
+
+                    System.out.printf("%-12d %-20s %-20s %-10d%n",
+                            result.getInt("emp_no"),
+                            result.getString("first_name"),
+                            result.getString("last_name"),
+                            result.getInt("salary"));
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error retrieving salaries by role: " + e.getMessage());
+        }
+    }
+    /**
+     * Retrieves all employees with their current salaries.
+     *
+     * @param connection Active MySQL database connection.
+     * @return List of employees and their current salaries.
+     */
+    public static ArrayList<Employee> getAllSalaries(Connection connection) {
+
+        ArrayList<Employee> employees = new ArrayList<>();
+
+        String sql = """
+            SELECT
+                employees.emp_no,
+                employees.first_name,
+                employees.last_name,
+                salaries.salary
+            FROM employees, salaries
+            WHERE employees.emp_no = salaries.emp_no
+              AND salaries.to_date = '9999-01-01'
+            ORDER BY employees.emp_no ASC
+            """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+
+            while (result.next()) {
+
+                Employee employee = new Employee();
+
+                employee.emp_no = result.getInt("emp_no");
+                employee.first_name = result.getString("first_name");
+                employee.last_name = result.getString("last_name");
+                employee.salary = result.getInt("salary");
+
+                employees.add(employee);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error retrieving employee salaries: " + e.getMessage());
+            return null;
+        }
+
+        return employees;
+    }
+    /**
+     * Prints a formatted list of employees and their current salaries.
+     *
+     * @param employees The list of employees to print.
+     */
+    public static void printSalaries(ArrayList<Employee> employees) {
+
+        if (employees == null) {
+            System.out.println("No salary information available.");
+            return;
+        }
+
+        // Print report heading
+        System.out.println("\nSalary Report for All Employees");
+        System.out.println("------------------------------------------------------------");
+
+        // Print column headings
+        System.out.printf("%-10s %-15s %-20s %-8s%n",
+                "Emp No", "First Name", "Last Name", "Salary");
+
+        // Print employee salary information
+        for (Employee emp : employees) {
+
+            System.out.printf("%-10d %-15s %-20s %-8d%n",
+                    emp.emp_no,
+                    emp.first_name,
+                    emp.last_name,
+                    emp.salary);
+        }
     }
 }
