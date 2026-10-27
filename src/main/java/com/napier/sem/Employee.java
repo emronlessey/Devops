@@ -1,6 +1,8 @@
 package com.napier.sem;
-import java.sql.PreparedStatement;
 
+/**
+ * Represents an employee within the organisation.
+ */
 public class Employee {
 
     public int emp_no;
@@ -13,7 +15,14 @@ public class Employee {
     // Additional employee information
     public int salary;
     public String title;
-    public String department;
-    public String manager;
 
+    /**
+     * Department to which the employee belongs.
+     */
+    public Department dept;
+
+    /**
+     * Employee responsible for managing this employee.
+     */
+    public Employee manager;
 }
