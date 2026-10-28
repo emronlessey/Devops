@@ -358,6 +358,7 @@ public class Main {
      */
     public static void printSalaries(ArrayList<Employee> employees) {
 
+        // Check whether the employee list is null
         if (employees == null) {
             System.out.println("No salary information available.");
             return;
@@ -374,6 +375,11 @@ public class Main {
         // Print employee salary information
         for (Employee emp : employees) {
 
+            // Skip null employee records
+            if (emp == null) {
+                continue;
+            }
+
             System.out.printf("%-10d %-15s %-20s %-8d%n",
                     emp.emp_no,
                     emp.first_name,
@@ -381,7 +387,6 @@ public class Main {
                     emp.salary);
         }
     }
-
     /**
      * Retrieves a department from the database using its name.
      *

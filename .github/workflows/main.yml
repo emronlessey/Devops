@@ -20,9 +20,15 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: maven
 
+      # Lab 6: Run automated JUnit tests
+      - name: Run Unit Tests
+        run: mvn -B -Dtest=com.napier.sem.MainTest test
+
+      # Package the application after successful tests
       - name: Build Application with Maven
-        run: mvn -B clean package
+        run: mvn -B clean package -DskipTests
 
       - name: Build Docker Images
         run: docker compose build
