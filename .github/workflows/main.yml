@@ -28,7 +28,7 @@ jobs:
 
       # Package the application after successful tests
       - name: Build Application with Maven
-        run: mvn -B clean package -DskipTests
+        run: mvn -B package -DskipTests -DskipTests
 
       - name: Build Docker Images
         run: docker compose build
