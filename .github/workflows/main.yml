@@ -53,6 +53,12 @@ jobs:
           echo "MySQL failed to become healthy."
           docker compose logs db
           exit 1
+          
+        
+                # Lab 7: Run integration tests against MySQL
+      - name: Run Integration Tests
+        run: mvn -B -Dtest=com.napier.sem.MainIntegrationTest test
+
 
       - name: Run Employee Application
         run: docker compose run --rm --no-deps app
