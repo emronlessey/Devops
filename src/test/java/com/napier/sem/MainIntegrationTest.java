@@ -126,6 +126,35 @@ public class MainIntegrationTest {
         );
     }
 
+    @Test
+    void testGetAllSalaries() {
+
+        ArrayList<Employee> employees =
+                Main.getAllSalaries(connection);
+
+        assertNotNull(
+                employees,
+                "The salary list should not be null"
+        );
+
+        assertFalse(
+                employees.isEmpty(),
+                "The database should contain employee salary records"
+        );
+    }
+
+    @Test
+    void testGetSalariesByRole() {
+
+        assertDoesNotThrow(
+                () -> Main.getSalariesByRole(
+                        connection,
+                        "Engineer"
+                ),
+                "Salary retrieval by role should execute without errors"
+        );
+    }
+
 
     @AfterAll
     static void cleanup() throws Exception {

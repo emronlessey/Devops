@@ -55,9 +55,22 @@ jobs:
           exit 1
           
         
-                # Lab 7: Run integration tests against MySQL
+       # Lab 7: Run integration tests against MySQL
       - name: Run Integration Tests
         run: mvn -B -Dtest=com.napier.sem.MainIntegrationTest test
+
+      # Lab 7: Generate JaCoCo coverage report
+      - name: Generate JaCoCo Coverage Report
+        run: mvn -B jacoco:report
+
+      # Lab 7: Upload code coverage results to Codecov
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./target/site/jacoco/jacoco.xml
+          fail_ci_if_error: true
+          verbose: true
 
 
       - name: Run Employee Application
