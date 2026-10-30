@@ -90,7 +90,7 @@ jobs:
 
       # Lab 8: Automatically publish executable JAR to GitHub Releases
       - name: Create GitHub Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
