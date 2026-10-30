@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -155,6 +157,80 @@ public class MainIntegrationTest {
         );
     }
 
+    @Test
+    void testAddEmployee() throws Exception {
+
+        int employeeNumber = 999999;
+
+        boolean originalAutoCommit = connection.getAutoCommit();
+
+        try {
+            // Start a transaction
+            connection.setAutoCommit(false);
+
+            // Add a temporary employee
+            boolean employeeAdded = Main.addEmployee(
+                    connection,
+                    employeeNumber,
+                    "Test",
+                    "Employee",
+                    "M",
+                    "1990-01-01",
+                    "2026-01-01"
+            );
+
+            // Verify that the employee was added
+            assertTrue(
+                    employeeAdded,
+                    "Employee should be added successfully"
+            );
+
+            // Verify the employee exists in the database
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "SELECT first_name, last_name FROM employees WHERE emp_no = ?")) {
+
+                statement.setInt(1, employeeNumber);
+
+                try (ResultSet result = statement.executeQuery()) {
+
+                    assertTrue(
+                            result.next(),
+                            "New employee should exist in the database"
+                    );
+
+                    assertEquals("Test", result.getString("first_name"));
+                    assertEquals("Employee", result.getString("last_name"));
+                }
+            }
+
+        } finally {
+            // Remove the temporary employee by rolling back
+            try {
+                connection.rollback();
+            } finally {
+                connection.setAutoCommit(originalAutoCommit);
+            }
+        }
+    }
+
+    @Test
+    void testAddEmployeeInvalidData() {
+
+        boolean result = Main.addEmployee(
+                connection,
+                -1,
+                "",
+                "Employee",
+                "M",
+                "1990-01-01",
+                "2026-01-01"
+        );
+
+        assertFalse(
+                result,
+                "Invalid employee information should be rejected"
+        );
+    }
 
     @AfterAll
     static void cleanup() throws Exception {

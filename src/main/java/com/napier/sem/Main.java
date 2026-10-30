@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.sql.SQLException;
 
 public class Main {
 
@@ -567,6 +568,66 @@ public class Main {
         }
 
         return null;
+    }
+    /**
+     * Adds a new employee to the database.
+     *
+     * @param connection Active database connection
+     * @param employeeNumber Employee identification number
+     * @param firstName Employee first name
+     * @param lastName Employee last name
+     * @param gender Employee gender
+     * @param birthDate Employee date of birth
+     * @param hireDate Employee hire date
+     * @return true if the employee was added successfully
+     */
+    public static boolean addEmployee(
+
+            Connection connection,
+            int employeeNumber,
+            String firstName,
+            String lastName,
+            String gender,
+            String birthDate,
+            String hireDate) {
+
+        // Validate required employee information
+        if (connection == null ||
+                employeeNumber <= 0 ||
+                firstName == null || firstName.isBlank() ||
+                lastName == null || lastName.isBlank() ||
+                gender == null ||
+                birthDate == null ||
+                hireDate == null) {
+
+            System.err.println("Invalid employee information.");
+            return false;
+        }
+
+
+
+        String sql = "INSERT INTO employees " +
+                "(emp_no, birth_date, first_name, last_name, gender, hire_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setInt(1, employeeNumber);
+            statement.setDate(2, java.sql.Date.valueOf(birthDate));
+            statement.setString(3, firstName);
+            statement.setString(4, lastName);
+            statement.setString(5, gender);
+            statement.setDate(6, java.sql.Date.valueOf(hireDate));
+
+            return statement.executeUpdate() == 1;
+
+        } catch (SQLException e) {
+            System.err.println(
+                    "Error adding employee: " + e.getMessage()
+            );
+            return false;
+        }
     }
 }
 
