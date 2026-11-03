@@ -10,6 +10,8 @@ services:
       MYSQL_DATABASE: employees
       MYSQL_USER: root
       MYSQL_PASSWORD: example
+    volumes:
+      - ./reports:/app/reports
 
   db:
     build: ./db

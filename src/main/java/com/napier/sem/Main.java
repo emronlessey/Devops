@@ -119,14 +119,41 @@ public class Main {
             // Retrieve all employees with their current salaries
             ArrayList<Employee> employees = getAllSalaries(connection);
 
-// Display the salary report
+// Generate the Markdown salary report
             if (employees != null) {
 
-                // Print all employee salaries
-             //   printSalaries(employees);
-
-                // Display the total number of current salary records
                 System.out.println("\nTotal current employee salaries: " + employees.size());
+
+                try {
+                    // Create the reports directory if it does not exist
+                    java.nio.file.Path reportsDirectory =
+                            java.nio.file.Paths.get("reports");
+
+                    java.nio.file.Files.createDirectories(reportsDirectory);
+
+                    // Limit the published report to the first 10 employees
+                    ArrayList<Employee> reportEmployees = new ArrayList<>(
+                            employees.subList(0, Math.min(10, employees.size()))
+                    );
+
+                    // Generate Markdown content
+                    String markdown = generateMarkdownSalaryReport(reportEmployees);
+
+                    // Save the report
+                    java.nio.file.Path reportFile =
+                            reportsDirectory.resolve("employee-salary-report.md");
+
+                    java.nio.file.Files.writeString(
+                            reportFile,
+                            markdown,
+                            java.nio.charset.StandardCharsets.UTF_8
+                    );
+
+                    System.out.println("Markdown report generated: " + reportFile);
+
+                } catch (java.io.IOException e) {
+                    System.err.println("Failed to generate Markdown report: " + e.getMessage());
+                }
 
             } else {
                 System.out.println("Failed to retrieve employee salaries.");
@@ -388,6 +415,48 @@ public class Main {
                     emp.salary);
         }
     }
+
+    /**
+     * Generates a Markdown salary report for employees.
+     *
+     * @param employees List of employees to include in the report.
+     * @return A formatted Markdown report.
+     */
+    public static String generateMarkdownSalaryReport(ArrayList<Employee> employees) {
+
+        StringBuilder markdown = new StringBuilder();
+
+        markdown.append("# Employee Salary Report\n\n");
+
+        markdown.append("| Employee Number | First Name | Last Name | Salary |\n");
+        markdown.append("|-----------------|------------|-----------|--------|\n");
+
+        if (employees == null || employees.isEmpty()) {
+            markdown.append("| No employee records available | | | |\n");
+            return markdown.toString();
+        }
+
+        for (Employee employee : employees) {
+
+            if (employee == null) {
+                continue;
+            }
+
+            markdown.append("| ")
+                    .append(employee.emp_no)
+                    .append(" | ")
+                    .append(employee.first_name)
+                    .append(" | ")
+                    .append(employee.last_name)
+                    .append(" | ")
+                    .append(employee.salary)
+                    .append(" |\n");
+        }
+
+        return markdown.toString();
+    }
+
+
     /**
      * Retrieves a department from the database using its name.
      *
