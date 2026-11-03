@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MainTest {
 
@@ -113,5 +113,103 @@ public class MainTest {
         employee.manager = manager;
 
         assertDoesNotThrow(() -> Main.displayEmployee(employee));
+    }
+
+    // Test 9: Markdown report contains valid employee information
+    @Test
+    void generateMarkdownReportValidEmployee() {
+
+        ArrayList<Employee> employees = new ArrayList<>();
+
+        Employee employee = new Employee();
+        employee.emp_no = 10001;
+        employee.first_name = "Kevin";
+        employee.last_name = "Chalmers";
+        employee.salary = 55000;
+
+        employees.add(employee);
+
+        String markdown = Main.generateMarkdownSalaryReport(employees);
+
+        assertTrue(markdown.contains("# Employee Salary Report"));
+        assertTrue(markdown.contains(
+                "| 10001 | Kevin | Chalmers | 55000 |"
+        ));
+    }
+
+    // Test 10: Markdown report handles an empty employee list
+    @Test
+    void generateMarkdownReportEmptyList() {
+
+        ArrayList<Employee> employees = new ArrayList<>();
+
+        String markdown = Main.generateMarkdownSalaryReport(employees);
+
+        assertTrue(markdown.contains(
+                "No employee records available"
+        ));
+    }
+
+    // Test 11: Markdown report handles a null employee list
+    @Test
+    void generateMarkdownReportNullList() {
+
+        String markdown = Main.generateMarkdownSalaryReport(null);
+
+        assertTrue(markdown.contains(
+                "No employee records available"
+        ));
+    }
+
+    // Test 12: Markdown report skips null employee records
+    @Test
+    void generateMarkdownReportContainsNullEmployee() {
+
+        ArrayList<Employee> employees = new ArrayList<>();
+
+        employees.add(null);
+
+        Employee employee = new Employee();
+        employee.emp_no = 10002;
+        employee.first_name = "Sarah";
+        employee.last_name = "Williams";
+        employee.salary = 60000;
+
+        employees.add(employee);
+
+        String markdown = Main.generateMarkdownSalaryReport(employees);
+
+        assertTrue(markdown.contains(
+                "| 10002 | Sarah | Williams | 60000 |"
+        ));
+
+        assertFalse(markdown.contains(
+                "No employee records available"
+        ));
+
+        assertEquals(1, markdown.lines()
+                .filter(line -> line.startsWith("| 10002 |"))
+                .count());
+    }
+
+    // Test 13: Markdown report contains the correct table headings
+    @Test
+    void generateMarkdownReportFormatting() {
+
+        ArrayList<Employee> employees = new ArrayList<>();
+
+        String markdown = Main.generateMarkdownSalaryReport(employees);
+
+        assertTrue(markdown.startsWith(
+                "# Employee Salary Report"
+        ));
+
+        assertTrue(markdown.contains(
+                "| Employee Number | First Name | Last Name | Salary |"
+        ));
+
+        assertTrue(markdown.contains(
+                "|-----------------|------------|-----------|--------|"
+        ));
     }
 }
