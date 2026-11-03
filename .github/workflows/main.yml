@@ -79,6 +79,22 @@ jobs:
 
       - name: Run Employee Application
         run: docker compose run --rm --no-deps app
+      # Lab 8: Verify the Markdown salary report was generated
+      - name: Verify Markdown Report
+        run: |
+          test -s reports/employee-salary-report.md
+          echo "Markdown salary report generated successfully."
+
+      # Lab 8: Publish Markdown report to the reports branch
+      - name: Publish Markdown Report
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: reports
+          folder: reports
+          clean: true
+          single-commit: true
+
 
       - name: Show Container Logs on Failure
         if: failure()
