@@ -295,6 +295,15 @@ class MainIntegrationTest {
         );
     }
 
+    @Test
+    void testMainApplicationExecution() {
+
+        assertDoesNotThrow(
+                () -> Main.main(new String[]{}),
+                "Main application should execute successfully"
+        );
+    }
+
     @AfterAll
     static void cleanup() throws Exception {
 
