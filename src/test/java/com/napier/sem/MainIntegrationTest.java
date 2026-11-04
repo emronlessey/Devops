@@ -303,6 +303,36 @@ class MainIntegrationTest {
                 "Main application should execute successfully"
         );
     }
+    // Test employee retrieval when the database connection is closed
+    @Test
+    void testGetEmployeeWithClosedConnection() throws Exception {
+
+        String url = "jdbc:mysql://localhost:3307/employees"
+                + "?allowPublicKeyRetrieval=true&useSSL=false";
+
+        try (Connection closedConnection =
+                     DriverManager.getConnection(
+                             url,
+                             "root",
+                             "example"
+                     )) {
+
+            // Simulate a database connection failure
+            closedConnection.close();
+
+            // Attempt to retrieve an employee using the closed connection
+            Employee employee = Main.getEmployee(
+                    closedConnection,
+                    10001
+            );
+
+            // Verify the application handles the failure gracefully
+            assertNull(
+                    employee,
+                    "Employee retrieval should return null when the database connection is closed"
+            );
+        }
+    }
 
     @AfterAll
     static void cleanup() throws Exception {
