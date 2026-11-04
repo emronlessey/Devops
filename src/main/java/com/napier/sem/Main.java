@@ -1,3 +1,4 @@
+
 package com.napier.sem;
 
 import java.sql.Connection;
@@ -6,13 +7,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.sql.SQLException;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class Main {
 
+    private static final Logger LOGGER =
+            Logger.getLogger(Main.class.getName());
+
+    @SuppressWarnings("PMD.SystemPrintln") // Intentional CLI report output.
     public static void main(String[] args) {
 
-        System.out.println("Hello and welcome!");
+        LOGGER.info("Hello and welcome!");
 
         String host = System.getenv().getOrDefault("MYSQL_HOST", "localhost");
         String port = System.getenv().getOrDefault("MYSQL_PORT", "3307");
@@ -27,7 +35,7 @@ public class Main {
              ResultSet result = statement.executeQuery(
                      "SELECT COUNT(*) AS total_employees FROM employees")) {
 
-            System.out.println("Successfully connected to MySQL!");
+            LOGGER.info("Successfully connected to MySQL!");
 
             if (result.next()) {
                 System.out.println("Total employees: " + result.getInt("total_employees"));
@@ -57,7 +65,7 @@ public class Main {
                 System.out.println("Department not found.");
             }
 // Lab 5 - Retrieve salaries for employees in the Sales department
-            ArrayList<Employee> departmentEmployees =
+            List<Employee> departmentEmployees =
                     getSalariesByDepartment(connection, department);
 
             if (departmentEmployees != null) {
@@ -114,10 +122,10 @@ public class Main {
             }
 
             // Retrieve and display salaries for employees with the Engineer role
-          //  getSalariesByRole(connection, "Engineer");
+            //  getSalariesByRole(connection, "Engineer");
 
             // Retrieve all employees with their current salaries
-            ArrayList<Employee> employees = getAllSalaries(connection);
+            List<Employee> employees = getAllSalaries(connection);
 
 // Generate the Markdown salary report
             if (employees != null) {
@@ -132,7 +140,7 @@ public class Main {
                     java.nio.file.Files.createDirectories(reportsDirectory);
 
                     // Limit the published report to the first 10 employees
-                    ArrayList<Employee> reportEmployees = new ArrayList<>(
+                    List<Employee> reportEmployees = new ArrayList<>(
                             employees.subList(0, Math.min(10, employees.size()))
                     );
 
@@ -152,7 +160,7 @@ public class Main {
                     System.out.println("Markdown report generated: " + reportFile);
 
                 } catch (java.io.IOException e) {
-                    System.err.println("Failed to generate Markdown report: " + e.getMessage());
+                    LOGGER.log(Level.SEVERE, "Failed to generate Markdown report", e);
                 }
 
             } else {
@@ -161,8 +169,7 @@ public class Main {
 
 
         } catch (Exception e) {
-            System.err.println("MySQL connection failed:");
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "MySQL connection failed", e);
             System.exit(1);
         }
     }
@@ -221,8 +228,8 @@ public class Main {
                     // Additional employee information
                     employee.salary = result.getInt("salary");
                     employee.title = result.getString("title");
-                  //  employee.department = result.getString("department");
-                   // employee.manager = result.getString("manager");
+                    //  employee.department = result.getString("department");
+                    // employee.manager = result.getString("manager");
 
                     /// Retrieve the employee's department and department manager
                     String departmentName = result.getString("department");
@@ -243,11 +250,12 @@ public class Main {
             }
 
         } catch (Exception e) {
-            System.err.println("Error retrieving employee: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error retrieving employee", e);
         }
 
         return null;
     }
+    @SuppressWarnings("PMD.SystemPrintln") // Employee details are intentionally printed to the console.
     public static void displayEmployee(Employee employee) {
 
         if (employee == null) {
@@ -288,10 +296,11 @@ public class Main {
         } else {
             System.out.println("Manager: Not assigned");
         }
-       // System.out.println("Department: " + employee.department);
-       // System.out.println("Manager: " + employee.manager);
+        // System.out.println("Department: " + employee.department);
+        // System.out.println("Manager: " + employee.manager);
 
     }
+    @SuppressWarnings("PMD.SystemPrintln") // Intentional formatted salary report.
     public static void getSalariesByRole(Connection connection, String role) {
 
         String sql = """
@@ -332,7 +341,7 @@ public class Main {
             }
 
         } catch (Exception e) {
-            System.err.println("Error retrieving salaries by role: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error retrieving salaries by role", e);
         }
     }
     /**
@@ -341,9 +350,9 @@ public class Main {
      * @param connection Active MySQL database connection.
      * @return List of employees and their current salaries.
      */
-    public static ArrayList<Employee> getAllSalaries(Connection connection) {
+    public static List<Employee> getAllSalaries(Connection connection) {
 
-        ArrayList<Employee> employees = new ArrayList<>();
+        List<Employee> employees = new ArrayList<>();
 
         String sql = """
             SELECT
@@ -373,7 +382,7 @@ public class Main {
             }
 
         } catch (Exception e) {
-            System.err.println("Error retrieving employee salaries: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error retrieving employee salaries", e);
             return null;
         }
 
@@ -384,7 +393,8 @@ public class Main {
      *
      * @param employees The list of employees to print.
      */
-    public static void printSalaries(ArrayList<Employee> employees) {
+    @SuppressWarnings("PMD.SystemPrintln") // Intentional formatted salary report.
+    public static void printSalaries(List<Employee> employees) {
 
         // Check whether the employee list is null
         if (employees == null) {
@@ -422,7 +432,7 @@ public class Main {
      * @param employees List of employees to include in the report.
      * @return A formatted Markdown report.
      */
-    public static String generateMarkdownSalaryReport(ArrayList<Employee> employees) {
+    public static String generateMarkdownSalaryReport(List<Employee> employees) {
 
         StringBuilder markdown = new StringBuilder();
 
@@ -523,7 +533,7 @@ public class Main {
             }
 
         } catch (Exception e) {
-            System.err.println("Error retrieving department: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error retrieving department", e);
         }
 
         return null;
@@ -537,13 +547,13 @@ public class Main {
      * @param dept Department to retrieve salaries for.
      * @return List of employees and their salaries.
      */
-    public static ArrayList<Employee> getSalariesByDepartment(
+    public static List<Employee> getSalariesByDepartment(
             Connection connection, Department dept) {
 
-        ArrayList<Employee> employees = new ArrayList<>();
+        List<Employee> employees = new ArrayList<>();
 
         if (dept == null) {
-            System.err.println("Department cannot be null.");
+            LOGGER.warning("Department cannot be null.");
             return employees;
         }
 
@@ -586,8 +596,7 @@ public class Main {
             }
 
         } catch (Exception e) {
-            System.err.println(
-                    "Error retrieving salaries by department: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error retrieving salaries by department", e);
             return null;
         }
 
@@ -632,8 +641,7 @@ public class Main {
             }
 
         } catch (Exception e) {
-            System.err.println(
-                    "Error retrieving employee by name: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error retrieving employee by name", e);
         }
 
         return null;
@@ -669,7 +677,7 @@ public class Main {
                 birthDate == null ||
                 hireDate == null) {
 
-            System.err.println("Invalid employee information.");
+            LOGGER.warning("Invalid employee information.");
             return false;
         }
 
@@ -692,11 +700,10 @@ public class Main {
             return statement.executeUpdate() == 1;
 
         } catch (SQLException e) {
-            System.err.println(
-                    "Error adding employee: " + e.getMessage()
-            );
+            LOGGER.log(Level.SEVERE, "Error adding employee", e);
             return false;
         }
     }
 }
+
 
