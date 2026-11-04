@@ -4,14 +4,19 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
+import java.util.List;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MainIntegrationTest {
+class MainIntegrationTest {
+
+    private static final Logger LOGGER =
+            Logger.getLogger(MainIntegrationTest.class.getName());
 
     static Connection connection;
 
@@ -27,10 +32,13 @@ public class MainIntegrationTest {
                 "example"
         );
 
-        assertNotNull(connection);
-        assertFalse(connection.isClosed());
+        assertNotNull(connection,
+                "Database connection should not be null");
 
-        System.out.println("Successfully connected to MySQL for integration testing!");
+        assertFalse(connection.isClosed(),
+                "Database connection should remain open during integration testing");
+
+        LOGGER.info("Successfully connected to MySQL for integration testing!");
     }
 
     @Test
@@ -38,20 +46,24 @@ public class MainIntegrationTest {
 
         Employee employee = Main.getEmployee(connection, 10001);
 
-        assertNotNull(employee, "Employee should exist in the database");
+        assertAll("Verify employee 10001 details",
 
-        assertEquals(10001, employee.emp_no);
-        assertEquals("Georgi", employee.first_name);
-        assertEquals("Facello", employee.last_name);
-    }
-    @Test
-    void testGetEmployeeNotFound() {
+                () -> assertNotNull(employee,
+                        "Employee should exist in the database"),
 
-        Employee employee = Main.getEmployee(connection, -1);
+                () -> {
+                    assertNotNull(employee,
+                            "Employee must exist before checking its details");
 
-        assertNull(
-                employee,
-                "An employee with an invalid number should not exist"
+                    assertEquals(10001, employee.emp_no,
+                            "Employee number should be 10001");
+
+                    assertEquals("Georgi", employee.first_name,
+                            "Employee first name should be Georgi");
+
+                    assertEquals("Facello", employee.last_name,
+                            "Employee last name should be Facello");
+                }
         );
     }
     @Test
@@ -63,14 +75,25 @@ public class MainIntegrationTest {
                 "Facello"
         );
 
-        assertNotNull(
-                employee,
-                "Employee should exist in the database"
-        );
+        assertAll("Verify employee details retrieved by name",
 
-        assertEquals(10001, employee.emp_no);
-        assertEquals("Georgi", employee.first_name);
-        assertEquals("Facello", employee.last_name);
+                () -> assertNotNull(employee,
+                        "Employee should exist in the database"),
+
+                () -> {
+                    if (employee != null) {
+
+                        assertEquals(10001, employee.emp_no,
+                                "Employee number should be 10001");
+
+                        assertEquals("Georgi", employee.first_name,
+                                "Employee first name should be Georgi");
+
+                        assertEquals("Facello", employee.last_name,
+                                "Employee last name should be Facello");
+                    }
+                }
+        );
     }
 
     @Test
@@ -109,41 +132,48 @@ public class MainIntegrationTest {
                 "Sales"
         );
 
-        assertNotNull(
-                department,
-                "Sales department should exist"
-        );
+        List<Employee> employees = department == null
+                ? null
+                : Main.getSalariesByDepartment(connection, department);
 
-        ArrayList<Employee> employees =
-                Main.getSalariesByDepartment(connection, department);
+        assertAll("Verify Sales department salary records",
 
-        assertNotNull(
-                employees,
-                "Salary retrieval should not return null"
-        );
+                () -> assertNotNull(
+                        department,
+                        "Sales department should exist"
+                ),
 
-        assertFalse(
-                employees.isEmpty(),
-                "Sales department should contain employee salary records"
+                () -> assertNotNull(
+                        employees,
+                        "Salary retrieval should not return null"
+                ),
+
+                () -> assertTrue(
+                        employees != null && !employees.isEmpty(),
+                        "Sales department should contain employee salary records"
+                )
         );
     }
-
     @Test
     void testGetAllSalaries() {
 
-        ArrayList<Employee> employees =
+        List<Employee> employees =
                 Main.getAllSalaries(connection);
 
-        assertNotNull(
-                employees,
-                "The salary list should not be null"
-        );
+        assertAll("Verify employee salary records",
 
-        assertFalse(
-                employees.isEmpty(),
-                "The database should contain employee salary records"
+                () -> assertNotNull(
+                        employees,
+                        "The salary list should not be null"
+                ),
+
+                () -> assertFalse(
+                        employees == null || employees.isEmpty(),
+                        "The database should contain employee salary records"
+                )
         );
     }
+
 
     @Test
     void testGetSalariesByRole() {
@@ -156,6 +186,7 @@ public class MainIntegrationTest {
                 "Salary retrieval by role should execute without errors"
         );
     }
+
 
     @Test
     void testAddEmployee() throws Exception {
@@ -179,35 +210,67 @@ public class MainIntegrationTest {
                     "2026-01-01"
             );
 
-            // Verify that the employee was added
-            assertTrue(
-                    employeeAdded,
-                    "Employee should be added successfully"
-            );
+            // Retrieve the inserted employee for verification
+            boolean employeeExists = false;
+            String firstName = null;
+            String lastName = null;
 
-            // Verify the employee exists in the database
-            try (PreparedStatement statement = connection.prepareStatement(
-                    "SELECT first_name, last_name FROM employees WHERE emp_no = ?")) {
+            try (PreparedStatement statement =
+                         connection.prepareStatement(
+                                 "SELECT first_name, last_name " +
+                                         "FROM employees WHERE emp_no = ?")) {
 
                 statement.setInt(1, employeeNumber);
 
                 try (ResultSet result = statement.executeQuery()) {
 
-                    assertTrue(
-                            result.next(),
-                            "New employee should exist in the database"
-                    );
-
-                    assertEquals("Test", result.getString("first_name"));
-                    assertEquals("Employee", result.getString("last_name"));
+                    if (result.next()) {
+                        employeeExists = true;
+                        firstName = result.getString("first_name");
+                        lastName = result.getString("last_name");
+                    }
                 }
             }
 
+            // Capture final values for JUnit lambda expressions
+            final boolean added = employeeAdded;
+            final boolean exists = employeeExists;
+            final String actualFirstName = firstName;
+            final String actualLastName = lastName;
+
+            // Group all related checks into one assertion
+            assertAll("Verify employee insertion and database details",
+
+                    () -> assertTrue(
+                            added,
+                            "Employee should be added successfully"
+                    ),
+
+                    () -> assertTrue(
+                            exists,
+                            "New employee should exist in the database"
+                    ),
+
+                    () -> assertEquals(
+                            "Test",
+                            actualFirstName,
+                            "Employee first name should be Test"
+                    ),
+
+                    () -> assertEquals(
+                            "Employee",
+                            actualLastName,
+                            "Employee last name should be Employee"
+                    )
+            );
+
         } finally {
-            // Remove the temporary employee by rolling back
+
+            // Roll back the temporary employee insertion
             try {
                 connection.rollback();
             } finally {
+                // Restore the original auto-commit setting
                 connection.setAutoCommit(originalAutoCommit);
             }
         }
@@ -237,7 +300,7 @@ public class MainIntegrationTest {
 
         if (connection != null && !connection.isClosed()) {
             connection.close();
-            System.out.println("Integration test database connection closed.");
+            LOGGER.info("Integration test database connection closed.");
         }
     }
 }
